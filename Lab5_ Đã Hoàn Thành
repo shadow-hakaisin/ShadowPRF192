@@ -1,0 +1,251 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+typedef struct {
+    char id[15];
+    char name[50];
+    float gpa;
+} Student;
+
+// === FUNCTION DECLARATIONS ===
+void inputStudents(Student st[], int *n);
+void addStudent(Student st[], int *n);
+void printStudents(Student st[], int n);
+void sortByName(Student st[], int n);
+void printGpaAbove3(Student st[], int n);
+void saveToFile(const char *filename, Student st[], int n);
+int loadFromFile(const char *filename, Student st[]);
+void deleteStudent(Student st[], int *n, char id[]);
+int searchById(Student st[], int n, char id[]);
+void menu();
+void pauseScreen();
+
+int main() {
+    Student st[50];
+    int n = 0, choice;
+    char id[15];
+
+    // File lưu trên Desktop
+    const char filename[] = "C:\\Users\\rodde\\Desktop\\students.txt";
+
+    // --- Tự động load dữ liệu từ file khi chạy ---
+    n = loadFromFile(filename, st);
+
+    do {
+        menu();
+        printf("Choose an option: ");
+        if (scanf("%d", &choice) != 1) {
+            choice = -1;
+            while (getchar() != '\n');
+        }
+        getchar();
+
+        system("cls"); // Xóa menu ngay sau khi chọn
+
+        switch (choice) {
+            case 1:
+                inputStudents(st, &n);
+                pauseScreen();
+                break;
+            case 2:
+                printStudents(st, n);
+                pauseScreen();
+                break;
+            case 3:
+                printGpaAbove3(st, n);
+                pauseScreen();
+                break;
+            case 4:
+                printf("Enter ID to search: ");
+                fgets(id, sizeof(id), stdin);
+                id[strcspn(id, "\n")] = 0;
+                {
+                    int pos = searchById(st, n, id);
+                    if (pos != -1)
+                        printf("Found: %s - %s - %.2f\n", st[pos].id, st[pos].name, st[pos].gpa);
+                    else
+                        printf("Student not found.\n");
+                }
+                pauseScreen();
+                break;
+            case 5:
+                addStudent(st, &n);
+                pauseScreen();
+                break;
+            case 6:
+                printf("Enter ID to delete: ");
+                fgets(id, sizeof(id), stdin);
+                id[strcspn(id, "\n")] = 0;
+                deleteStudent(st, &n, id);
+                pauseScreen();
+                break;
+            case 7:
+                sortByName(st, n);
+                printf("Sorted by name successfully!\n");
+                pauseScreen();
+                break;
+            case 8:
+                saveToFile(filename, st, n);
+                pauseScreen();
+                break;
+            case 9:
+                // Mở Notepad để chỉnh sửa
+                system("notepad C:\\Users\\rodde\\Desktop\\students.txt");
+                // Sau khi đóng Notepad, load lại dữ liệu
+                n = loadFromFile(filename, st);
+                pauseScreen();
+                break;
+            case 0:
+                printf("\nExiting program... Goodbye!\n");
+                break;
+            default:
+                printf("Invalid choice! Please try again.\n");
+                pauseScreen();
+        }
+    } while (choice != 0);
+
+    return 0;
+}
+
+// --- FUNCTION DEFINITIONS ---
+void menu() {
+    system("cls");
+    printf("==============================================\n");
+    printf("        STUDENT MANAGEMENT SYSTEM\n");
+    printf("==============================================\n");
+    printf(" 1. Input students\n");
+    printf(" 2. Display students\n");
+    printf(" 3. Show students with GPA > 3\n");
+    printf(" 4. Search student by ID\n");
+    printf(" 5. Add a new student\n");
+    printf(" 6. Delete student by ID\n");
+    printf(" 7. Sort by name\n");
+    printf(" 8. Save to file\n");
+    printf(" 9. Edit in Notepad & reload\n");
+    printf(" 0. Exit\n");
+    printf("==============================================\n");
+}
+
+void pauseScreen() {
+    printf("\nPress Enter to return to menu...");
+    getchar();
+}
+
+void inputStudents(Student st[], int *n) {
+    int count;
+    printf("Enter number of students: ");
+    scanf("%d", &count);
+    getchar();
+
+    for (int i = 0; i < count; i++) {
+        printf("\nStudent %d:\n", *n + 1);
+        printf("ID: ");
+        fgets(st[*n].id, sizeof(st[*n].id), stdin);
+        st[*n].id[strcspn(st[*n].id, "\n")] = 0;
+
+        printf("Name: ");
+        fgets(st[*n].name, sizeof(st[*n].name), stdin);
+        st[*n].name[strcspn(st[*n].name, "\n")] = 0;
+
+        printf("GPA: ");
+        scanf("%f", &st[*n].gpa);
+        getchar();
+        (*n)++;
+    }
+}
+
+void addStudent(Student st[], int *n) {
+    printf("\nEnter new student information:\n");
+    printf("ID: ");
+    fgets(st[*n].id, sizeof(st[*n].id), stdin);
+    st[*n].id[strcspn(st[*n].id, "\n")] = 0;
+
+    printf("Name: ");
+    fgets(st[*n].name, sizeof(st[*n].name), stdin);
+    st[*n].name[strcspn(st[*n].name, "\n")] = 0;
+
+    printf("GPA: ");
+    scanf("%f", &st[*n].gpa);
+    getchar();
+    (*n)++;
+    printf("Student added successfully!\n");
+}
+
+void printStudents(Student st[], int n) {
+    if (n == 0) {
+        printf("No students available.\n");
+        return;
+    }
+    printf("\n%-10s %-25s %s\n", "ID", "Name", "GPA");
+    printf("----------------------------------------------\n");
+    for (int i = 0; i < n; i++)
+        printf("%-10s %-25s %.2f\n", st[i].id, st[i].name, st[i].gpa);
+}
+
+void sortByName(Student st[], int n) {
+    for (int i = 0; i < n - 1; i++)
+        for (int j = n - 1; j > i; j--)
+            if (strcmp(st[j].name, st[j - 1].name) < 0) {
+                Student tmp = st[j];
+                st[j] = st[j - 1];
+                st[j - 1] = tmp;
+            }
+}
+
+void printGpaAbove3(Student st[], int n) {
+    printf("\nStudents with GPA > 3.0:\n");
+    int found = 0;
+    for (int i = 0; i < n; i++)
+        if (st[i].gpa > 3) {
+            printf("%-10s %-25s %.2f\n", st[i].id, st[i].name, st[i].gpa);
+            found = 1;
+        }
+    if (!found)
+        printf("No students with GPA above 3.0 found.\n");
+}
+
+void saveToFile(const char *filename, Student st[], int n) {
+    FILE *f = fopen(filename, "w");
+    if (!f) {
+        printf("Error saving file!\n");
+        return;
+    }
+    for (int i = 0; i < n; i++)
+        fprintf(f, "%s|%s|%.2f\n", st[i].id, st[i].name, st[i].gpa);
+    fclose(f);
+    printf("Saved to %s successfully!\n", filename);
+}
+
+int loadFromFile(const char *filename, Student st[]) {
+    FILE *f = fopen(filename, "r");
+    if (!f) {
+        printf("File not found!\n");
+        return 0;
+    }
+    int count = 0;
+    while (fscanf(f, "%[^|]|%[^|]|%f\n", st[count].id, st[count].name, &st[count].gpa) == 3)
+        count++;
+    fclose(f);
+    printf("Loaded %d students from file.\n", count);
+    return count;
+}
+
+int searchById(Student st[], int n, char id[]) {
+    for (int i = 0; i < n; i++)
+        if (strcmp(st[i].id, id) == 0)
+            return i;
+    return -1;
+}
+
+void deleteStudent(Student st[], int *n, char id[]) {
+    int pos = searchById(st, *n, id);
+    if (pos == -1) {
+        printf("Student not found.\n");
+        return;
+    }
+    for (int i = pos; i < *n - 1; i++)
+        st[i] = st[i + 1];
+    (*n)--;
+    printf("Deleted successfully.\n");
+}
